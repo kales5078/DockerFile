@@ -1,0 +1,32 @@
+version: '3'
+services:
+    mysql:
+        image:  mysql_image-co
+        build:  /home/ubuntu/databse
+        container_name: mysqlcontainer-compose
+        environment:
+        - MYSQL_DATABASE=chatappdb
+        - MYSQL_USER=Admin
+        - MYSQL_PASSWORD=1234
+        - MYSQL_ROOT_PASSWORD=1234
+        volumes:
+        - mysqldata:/var/lib/mysql
+
+    backend:
+        image: backendp_img
+        container_name: backendcontainer-compose
+        links:
+        - mysql
+
+    frontend:
+        image: front-img-compose
+        build: /home/ubuntu/frontend
+        container_name: frontendcontainer-compose
+        links:
+        - backend
+        ports:
+        - 80:80
+
+volumes:
+    mysqldata:
+
