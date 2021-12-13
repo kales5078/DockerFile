@@ -1,0 +1,198 @@
+*******************************Docker***********************************
+Docker is tool which create virtual machine
+==>Docker engine
+************************************************************************
+(dependencies:tools/packages/version of tools are not compatible required to work properly)
+************************************************************************
+Hypervisior==> by using hyperwiser we create virtual machine.
+*********************************************************************
+docker is advance version of virtualisation
+docker==> containerisation
+docker engine its like hypervisior
+	==> container
+in docker there is no o.s (operating system) for own.
+container==> it will take hard disk/RAM when it requires.
+	     they dont have their operating system.
+             container have their container hub(Docker hub)
+	     Deployment tool.
+             docker will not install the ubuntu/linux/windows server it will run directly without installing it it will run directly for us from Docker hub.
+Docker image ==> its like template
+***********************************************************************
+Advantage of docker:
+1: no pre-allocation of RAM
+2: less cost
+3: it can run on physical H/W / virtual H/W /or on cloud also
+4: Contineous integeration efficency: Docker enable you to build a container image and use that same image across every step of deployment process.
+5: you can reuse the image
+**********************************************************************
+Disadvantage/limitation of docker
+1:  docker is not a good solution for application that requires rich GUI
+2:  Docker does not provide cross -platform compatibility means if an application is designed to run in a docker
+3:  Docker is suitable when the development o.s and testing o.s are same ***********************************************************************  
+==>In container ==> all software tools or installed things are done here
+   then take image of that container and reuse that whenever required
+==>container is layerd file system
+************************************************************************
+Docker Ecosystem: set of softwares or packages
+************************************************************************
+*******************Component of Docer********************************
+1: Docker Daemon : Docker daemon runs on the Host O>S . it is    responsible for running Containers to manages docker service
+   Docker Daemon can communicate with other daemons.
+
+2: Docker client: Docker users can communicate with docker daemon through a client(through CLI). when a client runs any command server command on docker client terminal the client servers send the command  to the docker daemon.
+
+3: Docker Host: Docker host is used to provide environment to execute and run application . it conatins the docker daemon, images,containers, network
+
+4: Docker Hub
+5: Docker image: its readonly binary template used to create docker container
+
+*********************************************************************
+Ways to create an images
+1: take image from image hub
+2: create image from docker file
+3: create image from existing 
+
+*********************************************************************
+Docker Container:
+
+1: container hold the entire packages that is needed to run the application
+**********************************************************************
+Basic commands in docker:
+
+1: yum install docker -y
+2: docker images (to see all image present in your local machine)
+3: docker serach [ image name] (to find out image in docker hub)
+4: docker pull [ image name] (to download image from docker to local machine) 
+5: docker run -it --name satyam linux==>[image name] /bin/bash (to give name to Container)
+6: (To check service is start or not) service docker status 
+7: docker start nameofcontainer (to start container)
+8: docker attch nameofconatiner (to go inside conatiner)
+9: docker ps -a (to see all conatiner)
+10: docker ps (to see only running container)
+11: docker stop nameofcontainer( to stop container)
+12: docker rm nameofcontainer(to remove container)
+***********************************************************************
+13: docker diff nameofcontainer
+14: docker commit nameofcontaine(to create image of our conatiner)
+15: how to run created image ==> docker run -it --name satyam(containername) nameofimage==>[image name] /bin/bash
+*********************************************************************
+
+Dockerfile how to create
+1: create a file name Docker(D capital) ==> vi Dockerfile
+2: Add instruction in Dockerfile        ==> FROM,RUN
+3: Build dockerfile to create image     ==> docker build -t backend_image .
+  [-t ==> tag , (.) current directory]
+4: Run image to Create  Container       ==> docker run -it --name mysqlcontainer mysql_image /bin/bash
+
+********************************************************************
+
+
+create mysql db container
+backend container
+frontend container
+connect all container (using link label)
+custom docker image
+collestatic is not required
+
+************************************************************************
+***************mysql-image-dockerfile************************ 
+
+FROM mysql:latest
+ENV MYSQL_ROOT_PASSWORD 123456
+ENV MYSQL_DATABASE users
+ENV MYSQL_USER suraj
+ENV MYSQL_PASSWORD 123456
+EXPOSE 3306
+
+***************backend-image-Dockerfile*************************
+
+FROM python:3.6
+RUN apt-get update
+RUN apt-get install --yes python3-pip
+RUN mkdir /new_chat_application
+COPY new_chatapp /new_chat_application
+WORKDIR /new_chat_application
+RUN pip3 install -r requirements.txt
+RUN pip3 install mysqlclient
+EXPOSE 8000
+WORKDIR /new_chat_application/fundoo/
+ENTRYPOINT  python3 manage.py runserver 0.0.0.0:8000
+
+******************fronted-image-Dockerfile**********************
+
+FROM nginx:latest
+
+RUN apt-get update
+RUN apt-get install procps net-tools -y
+RUN rm /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx
+
+COPY chatapp.conf /etc/nginx/conf.d
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+
+
+*****************************************************************
+
+#docker run -d --name frontendcontainer -p 80:80 --link backendcontainer:backend_imagefrontend_image
+
+ docker exec -it nameofcontainer/id /bin/bash
+
+docker run -d --name backendcontainer --link mysqlcontainer:mysql_image backend_image
+
+docker run -d --name frontendcontainer -p 80:80 --link backendcontainer:backend_image frontend_image
+
+check the ip addres of docker-server to check docker will can acces to our project
+***********************************************************************
+
+***********************Docker-Compse***********************************
+tool for defing - running multi container docker application
+by using single command we can start and stop the services/containers
+
+***********************************************************************
+1:pip3 install -U docker-compose
+ docker-compose -v
+
+2:create docker-copose file at any location on your linux system
+  docker-compose.yml (standard file name)
+
+3:check the validity of file by command
+  docker-compose config
+
+4: run docker-compose.yml file by command 
+   docker-compose up -d (-d for dettach mode)
+   docker-compose up (if you have your images avilable)
+   docker-compose down (if you want to stop or delete that images and containers)
+
+***********************************************************************
+*******************docker-compose.yml**********************************
+version: '3'
+services:
+    mysql:
+        image:  mysql_image
+        build:  /home/ec2-user/
+        container_name: mysqlcontainer
+        environment:
+        - MYSQL_DATABASE=users
+        - MYSQL_USER=suraj
+        - MYSQL_PASSWORD=123456
+        - MYSQL_ROOT_PASSWORD=123456
+        volumes:
+        - mysqldata:/var/lib/mysql
+
+    backend:
+        image: backend_image
+        container_name: backendcontainer
+        links:
+        - mysql
+
+    frontend:
+        image: frontend_image
+        container_name: frontendcontainer
+        links:
+        - backend
+        ports:
+        - 80:80
+
+volumes:
+    mysqldata:
